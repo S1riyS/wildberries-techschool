@@ -1,32 +1,35 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"time"
 
-	"github.com/S1riyS/go-whiteboard/api-gateway/internal/config"
-	"github.com/S1riyS/go-whiteboard/api-gateway/pkg/logger/slogext"
+	v1 "github.com/S1riyS/wildberries-techschool/L0/server/internal/api/http/handler/v1"
+	"github.com/S1riyS/wildberries-techschool/L0/server/internal/config"
+	"github.com/S1riyS/wildberries-techschool/L0/server/internal/infrastructure/cache"
+	"github.com/S1riyS/wildberries-techschool/L0/server/internal/infrastructure/storage"
+	"github.com/S1riyS/wildberries-techschool/L0/server/internal/service"
+	"github.com/S1riyS/wildberries-techschool/L0/server/pkg/logger/slogext"
+	"github.com/S1riyS/wildberries-techschool/L0/server/pkg/postgresql"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 type HTTPServer struct {
-	logger *slog.Logger
 	config config.Config
 
 	ginInstance *gin.Engine // Gin engine that runs on `httpSrv`
 	// httpSrv     *http.Server // Underlying HTTP server
 }
 
-func NewHTTPServer(logger *slog.Logger, config config.Config) *HTTPServer {
-	// const mark = "httpServer.New"
-
+func NewHTTPServer(config config.Config) *HTTPServer {
 	server := &HTTPServer{
-		logger: logger,
 		config: config,
 	}
 
+	// Run init steps
 	server.initGin()
 	server.initControllers()
 
@@ -40,7 +43,7 @@ func NewHTTPServer(logger *slog.Logger, config config.Config) *HTTPServer {
 func (hs *HTTPServer) Run() error {
 	const mark = "httpServer.Run"
 
-	logger := hs.logger.With(slog.String("mark", mark))
+	logger := slog.With(slog.String("mark", mark))
 
 	port := fmt.Sprintf(":%d", hs.config.HTTP.Port)
 	if err := hs.ginInstance.Run(port); err != nil {
@@ -53,14 +56,16 @@ func (hs *HTTPServer) Run() error {
 func (hs *HTTPServer) Stop() {
 	const mark = "httpServer.Stop"
 
-	logger := hs.logger.With(slog.String("mark", mark))
+	logger := slog.With(slog.String("mark", mark))
 	logger.Warn("httpServer.Stop is NOT implemented yet", slog.Int("port", hs.config.HTTP.Port))
 }
 
 func (hs *HTTPServer) initGin() {
-	// const mark = "httpServer.setupGinEngine"
-
 	hs.ginInstance = gin.New()
+
+	if hs.config.Env == config.EnvProd {
+		gin.SetMode(gin.ReleaseMode)
+	}
 
 	// CORS configuration
 	hs.ginInstance.Use(cors.New(cors.Config{
@@ -75,22 +80,24 @@ func (hs *HTTPServer) initGin() {
 	// Middlewares
 	hs.ginInstance.Use(
 		gin.Recovery(),
-		middlewares.ErrorHandler(),
 		gin.Logger(),
 	)
 }
 
 func (hs *HTTPServer) initControllers() {
-	// const mark = "httpServer.initControllers"
-
 	// API
 	apiGroup := hs.ginInstance.Group("/api")
 	v1Group := apiGroup.Group("/v1")
 
-	// Whiteboard
-	whiteboardGroup := v1Group.Group("/whiteboards")
-	whiteboardController := v1.NewWhiteboardController(hs.logger)
+	orderGroup := v1Group.Group("/orders")
+
+	dbClient := postgresql.MustNewClient(context.TODO(), hs.config.Database)
+
+	orderCache := cache.NewOrderInMemoryCache()
+	orderRepository := storage.NewOrderRepository(dbClient, orderCache)
+	orderService := service.NewOrderService(orderRepository)
+	orderHandler := v1.NewOrderHandler(orderService)
 	{
-		whiteboardGroup.GET("/:id", whiteboardController.GetOne)
+		orderGroup.GET("/:id", orderHandler.GetOne)
 	}
 }
