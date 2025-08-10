@@ -1,35 +1,30 @@
 package app
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 	"time"
 
 	v1 "github.com/S1riyS/wildberries-techschool/L0/server/internal/api/http/handler/v1"
 	"github.com/S1riyS/wildberries-techschool/L0/server/internal/config"
-	"github.com/S1riyS/wildberries-techschool/L0/server/internal/infrastructure/cache"
-	"github.com/S1riyS/wildberries-techschool/L0/server/internal/infrastructure/storage"
-	"github.com/S1riyS/wildberries-techschool/L0/server/internal/service"
 	"github.com/S1riyS/wildberries-techschool/L0/server/pkg/logger/slogext"
-	"github.com/S1riyS/wildberries-techschool/L0/server/pkg/postgresql"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 type HTTPServer struct {
-	config config.Config
+	config       config.Config
+	orderHandler *v1.OrderHandler
 
 	ginInstance *gin.Engine // Gin engine that runs on `httpSrv`
-	// httpSrv     *http.Server // Underlying HTTP server
 }
 
-func NewHTTPServer(config config.Config) *HTTPServer {
+func NewHTTPServer(config config.Config, orderHandler *v1.OrderHandler) *HTTPServer {
 	server := &HTTPServer{
-		config: config,
+		config:       config,
+		orderHandler: orderHandler,
 	}
 
-	// Run init steps
 	server.initGin()
 	server.initControllers()
 
@@ -47,7 +42,7 @@ func (hs *HTTPServer) Run() error {
 
 	port := fmt.Sprintf(":%d", hs.config.HTTP.Port)
 	if err := hs.ginInstance.Run(port); err != nil {
-		logger.Error("failed to start http server", slog.Int("port", hs.config.HTTP.Port), slogext.Err(err))
+		logger.Error("Failed to start http server", slog.Int("port", hs.config.HTTP.Port), slogext.Err(err))
 	}
 
 	return nil
@@ -91,13 +86,7 @@ func (hs *HTTPServer) initControllers() {
 
 	orderGroup := v1Group.Group("/orders")
 
-	dbClient := postgresql.MustNewClient(context.TODO(), hs.config.Database)
-
-	orderCache := cache.NewOrderInMemoryCache()
-	orderRepository := storage.NewOrderRepository(dbClient, orderCache)
-	orderService := service.NewOrderService(orderRepository)
-	orderHandler := v1.NewOrderHandler(orderService)
 	{
-		orderGroup.GET("/:id", orderHandler.GetOne)
+		orderGroup.GET("/:id", hs.orderHandler.GetOne)
 	}
 }
