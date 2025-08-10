@@ -13,14 +13,16 @@ import (
 )
 
 type OrderRepository struct {
-	client postgresql.Client
-	sb     squirrel.StatementBuilderType
+	dbClient   postgresql.Client
+	sb         squirrel.StatementBuilderType
+	orderCache domain.IOrderCache
 }
 
-func NewOrderRepository(client postgresql.Client) *OrderRepository {
+func NewOrderRepository(dbClient postgresql.Client, orderCache domain.IOrderCache) *OrderRepository {
 	return &OrderRepository{
-		client: client,
-		sb:     squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		dbClient:   dbClient,
+		sb:         squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		orderCache: orderCache,
 	}
 }
 
@@ -79,11 +81,21 @@ func (r *OrderRepository) Save(ctx context.Context, order *domain.Order) error {
 		return err
 	}
 
-	_, err = r.client.Exec(ctx, query, args...)
+	_, err = r.dbClient.Exec(ctx, query, args...)
+	// Save to cache if no error
+	if err != nil {
+		r.orderCache.Save(ctx, order)
+	}
 	return err
 }
 
 func (r *OrderRepository) Get(ctx context.Context, orderID string) (*domain.Order, error) {
+	// Try cache first
+	cachedOrder, err := r.orderCache.Get(ctx, orderID)
+	if err == nil {
+		return cachedOrder, nil
+	}
+
 	query, args, err := r.sb.Select(
 		"order_uid",
 		"track_number",
@@ -111,7 +123,7 @@ func (r *OrderRepository) Get(ctx context.Context, orderID string) (*domain.Orde
 	var deliveryJSON, paymentJSON, itemsJSON []byte
 	var dateCreated time.Time
 
-	err = r.client.QueryRow(ctx, query, args...).Scan(
+	err = r.dbClient.QueryRow(ctx, query, args...).Scan(
 		&order.OrderUID,
 		&order.TrackNumber,
 		&order.Entry,
@@ -172,7 +184,7 @@ func (r *OrderRepository) GetAll(ctx context.Context) ([]*domain.Order, error) {
 		return nil, err
 	}
 
-	rows, err := r.client.Query(ctx, query, args...)
+	rows, err := r.dbClient.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

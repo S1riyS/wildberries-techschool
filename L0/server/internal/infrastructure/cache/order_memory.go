@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -18,14 +19,14 @@ func NewOrderInMemoryCache() *OrderInMemoryCache {
 	}
 }
 
-func (c *OrderInMemoryCache) Save(order *domain.Order) error {
+func (c *OrderInMemoryCache) Save(context context.Context, order *domain.Order) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.orders[order.OrderUID] = order
 	return nil
 }
 
-func (c *OrderInMemoryCache) Get(orderID string) (*domain.Order, error) {
+func (c *OrderInMemoryCache) Get(context context.Context, orderID string) (*domain.Order, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	order, exists := c.orders[orderID]
