@@ -6,7 +6,6 @@ import (
 
 	"github.com/S1riyS/wildberries-techschool/L0/server/internal/domain"
 	"github.com/S1riyS/wildberries-techschool/L0/server/internal/service"
-	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 )
 
 type OrderHandler struct {
@@ -19,8 +18,7 @@ func NewOrderHandler(service *service.OrderService) *OrderHandler {
 	}
 }
 
-func (h *OrderHandler) HandleMessage(ctx context.Context, kafkaMsg []byte, offset kafka.Offset, consumerNumber int) error {
-	// Unmarshal the Kafka message into an Order struct.
+func (h *OrderHandler) HandleMessage(ctx context.Context, kafkaMsg []byte, offset int64, consumerNumber int) error {
 	var order domain.Order
 	if err := json.Unmarshal(kafkaMsg, &order); err != nil {
 		return err
