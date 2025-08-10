@@ -1,17 +1,28 @@
 package v1
 
 import (
-	"log/slog"
-
 	"github.com/S1riyS/wildberries-techschool/L0/server/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
 type OrderHandler struct {
-	logger  *slog.Logger
-	service service.OrderService
+	service *service.OrderService
 }
 
-func (oh *OrderHandler) GetOne(ctx *gin.Context) {
+func NewOrderHandler(service *service.OrderService) *OrderHandler {
+	return &OrderHandler{
+		service: service,
+	}
+}
 
+func (h *OrderHandler) GetOne(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	order, err := h.service.GetOne(ctx.Request.Context(), id)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	ctx.JSON(200, order)
 }
