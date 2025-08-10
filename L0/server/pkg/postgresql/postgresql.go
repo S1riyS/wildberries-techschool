@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/S1riyS/go-whiteboard/whiteboard-service/pkg/logger/slogext"
 	"github.com/S1riyS/wildberries-techschool/L0/server/internal/config"
+	"github.com/S1riyS/wildberries-techschool/L0/server/pkg/logger/slogext"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -24,11 +24,11 @@ var (
 	once     sync.Once
 )
 
-func MustNewClient(ctx context.Context, logger *slog.Logger, cfg config.DatabaseConfig) *pgxpool.Pool {
+func MustNewClient(ctx context.Context, cfg config.DatabaseConfig) *pgxpool.Pool {
 	once.Do(func() {
 		const mark = "database.MustNewClient"
 
-		logger = logger.With(
+		logger := slog.With(
 			slog.String("mark", mark),
 			slog.String("dbname", cfg.Dbname),
 		)
