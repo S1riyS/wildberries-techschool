@@ -4,54 +4,86 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
+	"log/slog"
+	"os"
 
 	"github.com/S1riyS/wildberries-techschool/L0/server/internal/config"
 	"github.com/S1riyS/wildberries-techschool/L0/server/internal/domain"
 	"github.com/S1riyS/wildberries-techschool/L0/server/internal/infrastructure/kafka"
+	"github.com/S1riyS/wildberries-techschool/L0/server/pkg/logger/slogext"
+	"github.com/S1riyS/wildberries-techschool/L0/server/pkg/logger/slogpretty"
 	"github.com/go-faker/faker/v4"
+	"github.com/go-faker/faker/v4/pkg/options"
 	"github.com/joho/godotenv"
 )
 
+const (
+	localEnvPath = "configs/.env.local"
+)
+
 func main() {
+	const mark = "kafka_producer.main"
+
+	logger := setupPrettySlog()
+	logger = logger.With(slog.String("mark", mark))
+
 	// Read flags
-	var envPath string
-	flag.StringVar(&envPath, "env-path", "", "Path to .env file")
+	isDevMode := flag.Bool("local", false, "Local mode")
 	flag.Parse()
 
 	// Load local .env file in dev mode
-	err := godotenv.Load(envPath)
-	if err != nil {
-		panic(fmt.Errorf("error loading .env file: %v", err))
+	if *isDevMode {
+		err := godotenv.Overload(localEnvPath)
+		if err != nil {
+			logger.Error("Error loading .env file", slogext.Err(err))
+			return
+		}
 	}
-	log.Println("Loaded .env file")
 
 	// Init config
 	cfg := config.MustNew()
-	log.Println("Loaded config")
+	logger.Info("Created config",
+		slog.String("kafkaBrokers", fmt.Sprintf("%v", cfg.Kafka.Brokers)),
+	)
 
 	// Create order producer
 	orderProducer, err := kafka.NewProducer(cfg.Kafka.Brokers)
 	if err != nil {
-		panic(fmt.Errorf("error creating order producer: %v", err))
+		logger.Error("Error creating order producer", slogext.Err(err))
+		return
 	}
-	log.Println("Created order producer")
 	defer orderProducer.Close()
 
 	// Generate order
 	var randomOrder domain.Order
-	err = faker.FakeData(&randomOrder)
+	err = faker.FakeData(&randomOrder, options.WithRandomMapAndSliceMinSize(1), options.WithRandomMapAndSliceMaxSize(3))
 	if err != nil {
-		panic(fmt.Errorf("error generating order: %v", err))
+		logger.Error("Error generating random order", slogext.Err(err))
+		return
 	}
 	orderJSON, err := json.Marshal(randomOrder)
 	if err != nil {
-		panic(fmt.Errorf("error marshaling order to json: %v", err))
+		logger.Error("Error marshaling order to json", slogext.Err(err))
+		return
 	}
-	log.Println("Created order JSON")
 
 	err = orderProducer.Produce(string(orderJSON), cfg.Kafka.Topic, "")
 	if err != nil {
-		panic(fmt.Errorf("error producing order: %v", err))
+		logger.Error("Error producing order", slogext.Err(err))
 	}
+
+	logger.Info("Produced order", slog.String("orderUID", randomOrder.OrderUID))
+
+}
+
+func setupPrettySlog() *slog.Logger {
+	opts := slogpretty.PrettyHandlerOptions{
+		SlogOpts: &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		},
+	}
+
+	handler := opts.NewPrettyHandler(os.Stdout)
+
+	return slog.New(handler)
 }

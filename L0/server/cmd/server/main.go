@@ -23,7 +23,7 @@ func main() {
 	const mark = "server.main"
 
 	// Read flags
-	isDevMode := flag.Bool("dev", false, "Development mode")
+	isDevMode := flag.Bool("local", false, "Local mode")
 	flag.Parse()
 
 	// Load local .env file in dev mode
@@ -47,7 +47,7 @@ func main() {
 
 	// Init and run app
 	ctx := context.Background()
-	application := app.New(ctx, cfg)
+	application := app.MustNew(ctx, cfg)
 	go application.MustRun() // Run app in separate goroutine
 
 	// Graceful shutdown
@@ -68,7 +68,7 @@ func setupLogger(env config.EnvType) *slog.Logger {
 		log = setupPrettySlog()
 	case config.EnvProd:
 		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelError}),
+			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}),
 		)
 	}
 
