@@ -1,0 +1,96 @@
+version: "3"
+
+vars:
+  # Dirs
+  LOCAL_BIN: "{{.TASKFILE_DIR}}/bin"
+  LOCAL_MIGRATION: ./migrations
+  # Go files
+  MAIN_FILE: ./cmd/server/main.go
+  KAFKA_PRODUCER_FILE: ./cmd/kafka_producer/main.go
+  # Env
+  ENV_PROD_PATH: configs/.env.prod
+  DSN: "postgres://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_NAME?sslmode=disable"
+
+dotenv: ["configs/.env.prod"]
+
+tasks:
+  default:
+    silent: true
+    cmds:
+      - task --list --color
+
+  build:
+    desc: "Build the application"
+    cmds:
+      - go build -o main {{.MAIN_FILE}}
+
+  run:
+    desc: "Run the application"
+    cmds:
+      - go run {{.MAIN_FILE}} -dev
+
+  produce-order:
+    desc: "Produce order to kafka"
+    cmds:
+      - go run {{.KAFKA_PRODUCER_FILE}} -env-path {{.ENV_PROD_PATH}}
+
+  format:
+    desc: "Format the code"
+    cmds:
+      - go fmt ./...
+
+  lint:
+    desc: "Lint the code"
+    cmds:
+      - "{{.LOCAL_BIN}}/golangci-lint run ./... --config .golangci.yml"
+
+  tidy:
+    desc: "Run go mod tidy"
+    cmds:
+      - go mod tidy
+
+  install-deps:
+    desc: "Install binary dependencies"
+    cmds:
+      - mkdir -p {{.LOCAL_BIN}}
+      - GOBIN={{.LOCAL_BIN}} go install github.com/air-verse/air@latest
+      - GOBIN={{.LOCAL_BIN}} go install github.com/pressly/goose/v3/cmd/goose@latest
+      - GOBIN={{.LOCAL_BIN}} go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.1.6
+
+  test:
+    desc: "Run the tests"
+    cmds:
+      - go test ./... -v
+
+  watch:
+    desc: "Run the app in live-reloading mode (dev)"
+    cmds:
+      - "{{.LOCAL_BIN}}/air"
+
+  clean:
+    desc: "Clean the binary"
+    cmds:
+      - rm -f main
+
+  migration:create:
+    desc: "Create migration (acceptes migration name after --)"
+    vars:
+      NAME: wtf
+    cmds:
+      - mkdir -p {{.LOCAL_MIGRATION}}
+      - "{{.LOCAL_BIN}}/goose -dir {{.LOCAL_MIGRATION}} create '{{.CLI_ARGS}}' sql"
+
+  migration:up:
+    desc: "Migration up"
+    cmds:
+      - "{{.LOCAL_BIN}}/goose -dir {{.LOCAL_MIGRATION}} postgres {{.DSN}} up -v" # TODO: replace $DSN with actual dsn
+
+  migration:down:
+    desc: "Migration down"
+    cmds:
+      - "{{.LOCAL_BIN}}/goose -dir {{.LOCAL_MIGRATION}} postgres {{.DSN}} down -v" # TODO: replace $DSN with actual dsn
+
+  migration:status:
+    desc: "Migration status"
+    cmds:
+      - "{{.LOCAL_BIN}}/goose -dir {{.LOCAL_MIGRATION}} status"

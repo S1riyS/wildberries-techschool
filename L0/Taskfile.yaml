@@ -1,0 +1,20 @@
+version: "3"
+
+vars:
+  SERVER_ENV: server/configs/.env.prod
+
+tasks:
+  default:
+    silent: true
+    cmds:
+      - task --list --color
+
+  compose:up:
+    desc: "Start all containers"
+    cmds:
+      - docker-compose --env-file {{.SERVER_ENV}} --project-name "wb-techschool-l0" up -d --build
+
+  compose:down:
+    desc: "Stop all containers"
+    cmds:
+      - docker-compose down
