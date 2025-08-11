@@ -66,10 +66,14 @@ func setupLogger(env config.EnvType) *slog.Logger {
 	switch env {
 	case config.EnvLocal:
 		log = setupPrettySlog()
+	// TODO: change back to production logger
+	// case config.EnvProd:
+	// 	log = slog.New(
+	// 		slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
+	// 	)
+	// }
 	case config.EnvProd:
-		log = slog.New(
-			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}),
-		)
+		log = setupPrettySlog()
 	}
 
 	return log
