@@ -165,6 +165,10 @@ func (r *OrderRepository) Get(ctx context.Context, orderID string) (*domain.Orde
 		return nil, fmt.Errorf("unmarshal order components: %w", err)
 	}
 
+	// Set cache
+	if err := r.orderCache.Save(ctx, &order); err != nil {
+		logger.Error("Failed to set order in cache", slogext.Err(err))
+	}
 	return &order, nil
 }
 
