@@ -8,15 +8,17 @@ vars:
   MAIN_FILE: ./cmd/server/main.go
   KAFKA_PRODUCER_FILE: ./cmd/kafka_producer/main.go
   # Env
-  ENV_PROD_PATH: configs/.env.prod
+  ENV_LOCAL_PATH: configs/.env.local
   DSN: "postgres://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_NAME?sslmode=disable"
 
-dotenv: ["configs/.env.prod"]
+dotenv: ["configs/.env.local"]
 
 tasks:
   default:
     silent: true
     cmds:
+      - echo -e "This Taskfile is used for local development!"
+      - echo -e "For production use docker-compose.\n"
       - task --list --color
 
   build:
@@ -27,12 +29,12 @@ tasks:
   run:
     desc: "Run the application"
     cmds:
-      - go run {{.MAIN_FILE}} -dev
+      - go run {{.MAIN_FILE}} -local
 
   produce-order:
     desc: "Produce order to kafka"
     cmds:
-      - go run {{.KAFKA_PRODUCER_FILE}} -env-path {{.ENV_PROD_PATH}}
+      - go run {{.KAFKA_PRODUCER_FILE}} -local
 
   format:
     desc: "Format the code"
