@@ -6,7 +6,7 @@ import (
 )
 
 type Order struct {
-	OrderUID          string    `json:"order_uid" faker:"uuid_hyphenated"`
+	OrderUID          string    `json:"order_uid" faker:"uuid_digit"`
 	TrackNumber       string    `json:"track_number" faker:"len=15"`
 	Entry             string    `json:"entry" faker:"len=4"`
 	Delivery          Delivery  `json:"delivery"`
