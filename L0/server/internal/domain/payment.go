@@ -12,3 +12,8 @@ type Payment struct {
 	GoodsTotal   int    `json:"goods_total" faker:"boundary_start=300, boundary_end=20000"`
 	CustomFee    int    `json:"custom_fee" faker:"boundary_start=0, boundary_end=500"`
 }
+
+func (p *Payment) Validate() error {
+	// TODO: validation heavily depends on business logic, which I don't have
+	return nil
+}

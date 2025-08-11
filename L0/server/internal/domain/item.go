@@ -13,3 +13,8 @@ type Item struct {
 	Brand       string `json:"brand" faker:"oneof: Vivienne Sabo, L'Oreal, Maybelline, NYX, MAC, Fenty"`
 	Status      int    `json:"status" faker:"boundary_start=100, boundary_end=299"`
 }
+
+func (i *Item) Validate() error {
+	// TODO: validation heavily depends on business logic, which I don't have
+	return nil
+}

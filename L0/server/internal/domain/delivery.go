@@ -9,3 +9,8 @@ type Delivery struct {
 	Region  string `json:"region" faker:"oneof: NY, CA, IL, TX, AZ"`
 	Email   string `json:"email" faker:"email"`
 }
+
+func (d *Delivery) Validate() error {
+	// TODO: validation heavily depends on business logic, which I don't have
+	return nil
+}

@@ -32,3 +32,27 @@ type IOrderCache interface {
 	Save(ctx context.Context, order *Order) error
 	Get(ctx context.Context, orderID string) (*Order, error)
 }
+
+func (o *Order) Validate() error {
+	// TODO: validation heavily depends on business logic, which I don't have
+	// Validate delivery
+	err := o.Delivery.Validate()
+	if err != nil {
+		return err
+	}
+
+	// Validate payment
+	err = o.Payment.Validate()
+	if err != nil {
+		return err
+	}
+
+	// Validate items
+	for _, item := range o.Items {
+		err = item.Validate()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
