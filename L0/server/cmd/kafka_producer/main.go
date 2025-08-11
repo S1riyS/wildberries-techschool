@@ -67,7 +67,7 @@ func main() {
 		return
 	}
 
-	err = orderProducer.Produce(string(orderJSON), cfg.Kafka.Topic, "")
+	err = orderProducer.Produce(string(orderJSON), cfg.Kafka.Topic, randomOrder.OrderUID)
 	if err != nil {
 		logger.Error("Error producing order", slogext.Err(err))
 	}
