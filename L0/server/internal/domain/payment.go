@@ -1,5 +1,7 @@
 package domain
 
+import "errors"
+
 type Payment struct {
 	Transaction  string `json:"transaction" faker:"uuid_hyphenated"`
 	RequestID    string `json:"request_id" faker:"uuid_digit"`
@@ -15,5 +17,20 @@ type Payment struct {
 
 func (p *Payment) Validate() error {
 	// TODO: validation heavily depends on business logic, which I don't have
+
+	if p.Transaction == "" {
+		return errors.New("transaction cannot be empty")
+	}
+	if p.RequestID == "" {
+		return errors.New("request_id cannot be empty")
+	}
+	if p.Currency == "" {
+		return errors.New("currency cannot be empty")
+	}
+	if p.Amount <= 0 {
+		return errors.New("amount must be greater than 0")
+	}
+	// etc
+
 	return nil
 }

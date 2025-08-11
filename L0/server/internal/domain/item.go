@@ -1,5 +1,7 @@
 package domain
 
+import "errors"
+
 type Item struct {
 	ChrtID      int    `json:"chrt_id" faker:"boundary_start=1000000, boundary_end=9999999"`
 	TrackNumber string `json:"track_number" faker:"len=15"`
@@ -16,5 +18,16 @@ type Item struct {
 
 func (i *Item) Validate() error {
 	// TODO: validation heavily depends on business logic, which I don't have
+
+	if i.Name == "" {
+		return errors.New("name cannot be empty")
+	}
+	if i.Price <= 0 {
+		return errors.New("price must be greater than 0")
+	}
+	if i.TotalPrice <= 0 {
+		return errors.New("total_price must be greater than 0")
+	}
+
 	return nil
 }

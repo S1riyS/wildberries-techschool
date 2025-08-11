@@ -1,5 +1,7 @@
 package domain
 
+import "errors"
+
 type Delivery struct {
 	Name    string `json:"name" faker:"name"`
 	Phone   string `json:"phone" faker:"phone_number"`
@@ -12,5 +14,23 @@ type Delivery struct {
 
 func (d *Delivery) Validate() error {
 	// TODO: validation heavily depends on business logic, which I don't have
+
+	if d.Name == "" {
+		return errors.New("name cannot be empty")
+	}
+	if d.Phone == "" {
+		return errors.New("phone cannot be empty")
+	}
+	if d.Zip == "" {
+		return errors.New("zip cannot be empty")
+	}
+	if d.City == "" {
+		return errors.New("city cannot be empty")
+	}
+	if d.Address == "" {
+		return errors.New("address cannot be empty")
+	}
+	// etc
+
 	return nil
 }
