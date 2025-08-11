@@ -6,78 +6,60 @@ import (
 
 	"log/slog"
 
-	v1 "github.com/S1riyS/wildberries-techschool/L0/server/internal/api/http/handler/v1"
 	"github.com/S1riyS/wildberries-techschool/L0/server/internal/config"
-	"github.com/S1riyS/wildberries-techschool/L0/server/internal/infrastructure/cache"
-	"github.com/S1riyS/wildberries-techschool/L0/server/internal/infrastructure/kafka"
-	"github.com/S1riyS/wildberries-techschool/L0/server/internal/infrastructure/storage"
-	"github.com/S1riyS/wildberries-techschool/L0/server/internal/service"
+	"github.com/S1riyS/wildberries-techschool/L0/server/internal/job"
 	"github.com/S1riyS/wildberries-techschool/L0/server/pkg/logger/slogext"
-	"github.com/S1riyS/wildberries-techschool/L0/server/pkg/postgresql"
 )
 
 type App struct {
-	config        config.Config
-	httpServer    *HTTPServer
-	kafkaConsumer *kafka.Consumer
+	config   config.Config
+	resolver *Resolver
 }
 
-func MustNew(_ context.Context, cfg config.Config) *App {
-	const mark = "app.New"
-
-	// Dependencies
-	dbClient := postgresql.MustNewClient(context.TODO(), cfg.Database)
-	orderCache := cache.NewOrderInMemoryCache()
-	orderRepository := storage.NewOrderRepository(dbClient, orderCache)
-	orderService := service.NewOrderService(orderRepository)
-	orderHandler := v1.NewOrderHandler(orderService)
-
-	// Kafka consumer
-	consumer, err := kafka.NewConsumer(
-		kafka.NewOrderHandler(orderService),
-		cfg.Kafka.Brokers,
-		cfg.Kafka.Topic,
-		"order",
-	)
-	if err != nil {
-		slog.With(slog.String("mark", mark)).Error("failed to create kafka consumer", slogext.Err(err))
-		panic(err)
+func MustNew(cfg config.Config) *App {
+	return &App{
+		config:   cfg,
+		resolver: NewResolver(cfg),
 	}
-
-	app := &App{
-		config:        cfg,
-		httpServer:    NewHTTPServer(cfg, orderHandler),
-		kafkaConsumer: consumer,
-	}
-
-	return app
 }
 
-func (a *App) MustRun() {
+func (a *App) MustRun(ctx context.Context) {
 	const mark = "app.Run"
 
 	logger := slog.With(slog.String("mark", mark))
 
 	wg := &sync.WaitGroup{}
-	wg.Add(2)
+	wg.Add(3)
 
+	// Recover cache
 	go func() {
 		defer wg.Done()
-		err := a.httpServer.Run()
+		err := job.RecoverCache(ctx, a.resolver.OrderRepository(ctx), a.resolver.OrderCache())
+		if err != nil {
+			logger.Error("failed to recover cache", slogext.Err(err))
+		}
+	}()
+
+	// Run HTTP server
+	go func() {
+		defer wg.Done()
+		err := a.resolver.HTTPServer(ctx).Run()
 		if err != nil {
 			logger.Error("failed to start http server", slog.Int("port", a.config.HTTP.Port), slogext.Err(err))
 		}
 	}()
 
+	// Run kafka consumers
 	go func() {
 		defer wg.Done()
-		a.kafkaConsumer.Start(context.TODO())
+		a.resolver.OrderConsumer(ctx).Start(ctx)
 	}()
 
 	wg.Wait()
 }
 
 func (a *App) Stop() {
-	a.httpServer.Stop()
-	a.kafkaConsumer.Stop()
+	ctx := context.Background()
+	a.resolver.HTTPServer(ctx).Stop()
+	a.resolver.OrderConsumer(ctx).Stop()
 }
