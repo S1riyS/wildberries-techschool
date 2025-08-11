@@ -25,6 +25,7 @@ type Order struct {
 type IOrderRepository interface {
 	Save(ctx context.Context, order *Order) error
 	Get(ctx context.Context, orderID string) (*Order, error)
+	GetRecentlyCreated(ctx context.Context, limit int) ([]*Order, error)
 }
 
 type IOrderCache interface {
