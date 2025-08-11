@@ -82,6 +82,17 @@ services:
       - app-net
       - kafka-net
 
+  frontend:
+    build: ./client
+    container_name: frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - app-net
+
   job_producer:
     build:
       context: server

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <title>Order Lookup</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex-grow: 1;
+            padding: 8px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #response {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+
+        .loading {
+            display: none;
+            color: #666;
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Order Lookup</h1>
+        <div class="input-group">
+            <input type="text" id="orderUid" placeholder="Enter Order UID" />
+            <button id="fetchBtn">Get Order</button>
+        </div>
+        <div id="loading" class="loading">Loading...</div>
+        <div id="error" class="error"></div>
+        <div id="response"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const fetchBtn = document.getElementById('fetchBtn');
+            const orderUidInput = document.getElementById('orderUid');
+            const responseDiv = document.getElementById('response');
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+
+            fetchBtn.addEventListener('click', fetchOrder);
+
+            // Also allow pressing Enter in the input field
+            orderUidInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    fetchOrder();
+                }
+            });
+
+            function fetchOrder() {
+                const orderUid = orderUidInput.value.trim();
+                if (!orderUid) {
+                    errorDiv.textContent = 'Please enter an Order UID';
+                    return;
+                }
+
+                // Clear previous results and show loading
+                errorDiv.textContent = '';
+                responseDiv.textContent = '';
+                loadingDiv.style.display = 'block';
+
+                // Make the API call
+                fetch(`http://localhost:8080/api/v1/orders/${orderUid}`)
+                    .then(response => {
+                        loadingDiv.style.display = 'none';
+                        if (!response.ok) {
+                            throw new Error(`Error: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Format and display the JSON response
+                        responseDiv.textContent = JSON.stringify(data, null, 2);
+                    })
+                    .catch(error => {
+                        loadingDiv.style.display = 'none';
+                        errorDiv.textContent = `Failed to fetch order: ${error.message}`;
+                        console.error('Error:', error);
+                    });
+            }
+
+            // Pre-fill with the example UID for testing
+            orderUidInput.value = '51ccd019509f4826ba693e7d5934b006';
+        });
+    </script>
+</body>
+
+</html>
