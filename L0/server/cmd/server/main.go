@@ -47,8 +47,8 @@ func main() {
 
 	// Init and run app
 	ctx := context.Background()
-	application := app.MustNew(ctx, cfg)
-	go application.MustRun() // Run app in separate goroutine
+	application := app.MustNew(cfg)
+	go application.MustRun(ctx) // Run app in separate goroutine
 
 	// Graceful shutdown
 	stop := make(chan os.Signal, 1)
