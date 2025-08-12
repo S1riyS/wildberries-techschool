@@ -93,12 +93,12 @@ services:
     networks:
       - app-net
 
-  job_producer:
+  job-producer:
     build:
       context: server
       dockerfile: producer.Dockerfile
     restart: unless-stopped
-    container_name: job_producer
+    container_name: job-producer
     depends_on:
       kafka:
         condition: service_started
@@ -106,12 +106,12 @@ services:
     networks:
       - kafka-net
 
-  job_migrator:
+  job-migrator:
     build:
       context: server
       dockerfile: migrator.Dockerfile
     restart: on-failure
-    container_name: job_migrator
+    container_name: job-migrator
     depends_on:
       postgres:
         condition: service_healthy
@@ -120,7 +120,7 @@ services:
       - app-net
 
 volumes:
-  postgres_data:
+  postgres-data:
 
 networks:
     kafka-net:

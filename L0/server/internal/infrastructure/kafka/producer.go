@@ -9,10 +9,6 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-const (
-	flushTimeout = 5 * time.Second
-)
-
 type Producer struct {
 	writer *kafka.Writer
 }
@@ -22,7 +18,7 @@ func NewProducer(addresses []string) (*Producer, error) {
 		Addr:         kafka.TCP(addresses...),
 		Balancer:     &kafka.LeastBytes{},
 		BatchTimeout: 50 * time.Millisecond,
-		// At least once delivery
+		// At-least-once delivery
 		RequiredAcks: kafka.RequireAll,
 		Async:        false,
 		MaxAttempts:  10,
