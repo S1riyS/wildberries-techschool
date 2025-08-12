@@ -24,7 +24,7 @@ tasks:
   exec:producer:
     desc: "Run kafka producer job"
     cmds:
-      - docker exec -it job_producer ./kafka_producer
+      - docker exec -it job-producer ./kafka_producer
 
   exec:database:
     desc: "Exec into database (postgres) container"
