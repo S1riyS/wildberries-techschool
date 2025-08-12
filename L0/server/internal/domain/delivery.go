@@ -1,6 +1,9 @@
 package domain
 
-import "errors"
+import (
+	"context"
+	"errors"
+)
 
 type Delivery struct {
 	Name    string `json:"name" faker:"name"`
@@ -10,6 +13,11 @@ type Delivery struct {
 	Address string `json:"address" faker:"sentence"`
 	Region  string `json:"region" faker:"oneof: NY, CA, IL, TX, AZ"`
 	Email   string `json:"email" faker:"email"`
+}
+
+type IDeliveryRepository interface {
+	Save(ctx context.Context, delivery *Delivery) (int, error)
+	Get(ctx context.Context, id int) (*Delivery, error)
 }
 
 func (d *Delivery) Validate() error {

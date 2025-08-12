@@ -1,6 +1,9 @@
 package domain
 
-import "errors"
+import (
+	"context"
+	"errors"
+)
 
 type Payment struct {
 	Transaction  string `json:"transaction" faker:"uuid_hyphenated"`
@@ -13,6 +16,11 @@ type Payment struct {
 	DeliveryCost int    `json:"delivery_cost" faker:"boundary_start=500, boundary_end=5000"`
 	GoodsTotal   int    `json:"goods_total" faker:"boundary_start=300, boundary_end=20000"`
 	CustomFee    int    `json:"custom_fee" faker:"boundary_start=0, boundary_end=500"`
+}
+
+type IPaymentRepository interface {
+	Save(ctx context.Context, payment *Payment) error
+	Get(ctx context.Context, transaction string) (*Payment, error)
 }
 
 func (p *Payment) Validate() error {

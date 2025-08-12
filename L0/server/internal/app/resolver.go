@@ -23,6 +23,10 @@ type Resolver struct {
 	dbClient   postgresql.Client
 	httpServer *HTTPServer
 
+	deliveryRepository domain.IDeliveryRepository
+	paymentRepository  domain.IPaymentRepository
+	itemRepository     domain.IItemRepository
+
 	orderCache      domain.IOrderCache
 	orderRepository domain.IOrderRepository
 	orderService    *service.OrderService
@@ -50,6 +54,27 @@ func (r *Resolver) HTTPServer(ctx context.Context) *HTTPServer {
 	return r.httpServer
 }
 
+func (r *Resolver) DeliveryRepository(ctx context.Context) domain.IDeliveryRepository {
+	if r.deliveryRepository == nil {
+		r.deliveryRepository = storage.NewDeliveryRepository(r.DBClient(ctx))
+	}
+	return r.deliveryRepository
+}
+
+func (r *Resolver) PaymentRepository(ctx context.Context) domain.IPaymentRepository {
+	if r.paymentRepository == nil {
+		r.paymentRepository = storage.NewPaymentRepository(r.DBClient(ctx))
+	}
+	return r.paymentRepository
+}
+
+func (r *Resolver) ItemRepository(ctx context.Context) domain.IItemRepository {
+	if r.itemRepository == nil {
+		r.itemRepository = storage.NewItemRepository(r.DBClient(ctx))
+	}
+	return r.itemRepository
+}
+
 func (r *Resolver) OrderCache() domain.IOrderCache {
 	if r.orderCache == nil {
 		r.orderCache = cache.NewOrderInMemoryCache(orderCacheCapacity)
@@ -59,7 +84,13 @@ func (r *Resolver) OrderCache() domain.IOrderCache {
 
 func (r *Resolver) OrderRepository(ctx context.Context) domain.IOrderRepository {
 	if r.orderRepository == nil {
-		r.orderRepository = storage.NewOrderRepository(r.DBClient(ctx), r.OrderCache())
+		r.orderRepository = storage.NewOrderRepository(
+			r.DBClient(ctx),
+			r.OrderCache(),
+			r.DeliveryRepository(ctx),
+			r.PaymentRepository(ctx),
+			r.ItemRepository(ctx),
+		)
 	}
 	return r.orderRepository
 }

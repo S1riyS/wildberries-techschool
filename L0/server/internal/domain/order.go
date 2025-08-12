@@ -11,7 +11,7 @@ type Order struct {
 	Entry             string    `json:"entry" faker:"len=4"`
 	Delivery          Delivery  `json:"delivery"`
 	Payment           Payment   `json:"payment"`
-	Items             []Item    `json:"items"`
+	Items             []*Item   `json:"items"`
 	Locale            string    `json:"locale" faker:"oneof: en, ru, de, fr, es, it"`
 	InternalSignature string    `json:"internal_signature" faker:"word"`
 	CustomerID        string    `json:"customer_id" faker:"uuid_digit"`

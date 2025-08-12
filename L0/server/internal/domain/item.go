@@ -1,6 +1,9 @@
 package domain
 
-import "errors"
+import (
+	"context"
+	"errors"
+)
 
 type Item struct {
 	ChrtID      int    `json:"chrt_id" faker:"boundary_start=1000000, boundary_end=9999999"`
@@ -14,6 +17,12 @@ type Item struct {
 	NMID        int    `json:"nm_id" faker:"boundary_start=1000000, boundary_end=9999999"`
 	Brand       string `json:"brand" faker:"oneof: Vivienne Sabo, L'Oreal, Maybelline, NYX, MAC, Fenty"`
 	Status      int    `json:"status" faker:"boundary_start=100, boundary_end=299"`
+}
+
+type IItemRepository interface {
+	Save(ctx context.Context, item *Item) error
+	Get(ctx context.Context, chrtID int) (*Item, error)
+	GetByOrder(ctx context.Context, orderUID string) ([]*Item, error)
 }
 
 func (i *Item) Validate() error {
