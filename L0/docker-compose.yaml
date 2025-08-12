@@ -106,6 +106,19 @@ services:
     networks:
       - kafka-net
 
+  job_migrator:
+    build:
+      context: server
+      dockerfile: migrator.Dockerfile
+    restart: on-failure
+    container_name: job_migrator
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: "./server/configs/.env.prod"
+    networks:
+      - app-net
+
 volumes:
   postgres_data:
 
