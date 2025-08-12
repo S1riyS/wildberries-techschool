@@ -35,9 +35,9 @@ func NewConsumer(handler IKafkaHandler, addresses []string, topic string, consum
 		Brokers:        addresses,
 		GroupID:        consumerGroup,
 		Topic:          topic,
-		CommitInterval: 5 * time.Second,
 		SessionTimeout: 7 * time.Second,
 		StartOffset:    kafka.FirstOffset,
+		CommitInterval: 0, // Disable auto-commit
 	})
 
 	return &Consumer{
@@ -56,14 +56,22 @@ func (c *Consumer) Start(ctx context.Context) {
 			break
 		}
 
+		// Read message
 		msg, err := c.reader.ReadMessage(ctx)
 		if err != nil {
 			logger.Warn("Failed to read message", slogext.Err(err))
 			continue
 		}
 
+		// Handle message
 		if err := c.handler.HandleMessage(ctx, msg.Value, msg.Offset, c.consumerNumber); err != nil {
-			logger.Warn("failed to handle message", slogext.Err(err))
+			logger.Warn("Failed to handle message", slogext.Err(err))
+		}
+
+		// Commit message manually
+		if err := c.reader.CommitMessages(ctx, msg); err != nil {
+			// Обработка ошибки коммита
+			logger.Warn("Failed to commit message", slogext.Err(err))
 		}
 	}
 }

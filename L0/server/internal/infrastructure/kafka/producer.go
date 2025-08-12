@@ -22,6 +22,10 @@ func NewProducer(addresses []string) (*Producer, error) {
 		Addr:         kafka.TCP(addresses...),
 		Balancer:     &kafka.LeastBytes{},
 		BatchTimeout: 50 * time.Millisecond,
+		// At least once delivery
+		RequiredAcks: kafka.RequireAll,
+		Async:        false,
+		MaxAttempts:  10,
 	}
 
 	return &Producer{writer: writer}, nil
