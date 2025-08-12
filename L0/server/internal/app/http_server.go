@@ -6,6 +6,7 @@ import (
 	"time"
 
 	v1 "github.com/S1riyS/wildberries-techschool/L0/server/internal/api/http/handler/v1"
+	"github.com/S1riyS/wildberries-techschool/L0/server/internal/api/http/middleware"
 	"github.com/S1riyS/wildberries-techschool/L0/server/internal/config"
 	"github.com/S1riyS/wildberries-techschool/L0/server/pkg/logger/slogext"
 	"github.com/gin-contrib/cors"
@@ -75,7 +76,8 @@ func (hs *HTTPServer) initGin() {
 	// Middlewares
 	hs.ginInstance.Use(
 		gin.Recovery(),
-		gin.Logger(),
+		// gin.Logger(),
+		middleware.Logger(),
 	)
 }
 
