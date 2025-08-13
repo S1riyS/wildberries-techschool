@@ -1,0 +1,17 @@
+# Root dirs
+/*
+!/client/
+!/server/
+
+# Backend
+server/configs
+#...
+
+# Frontend
+# ...
+
+# General dirs and files
+.git/
+.DS_Store
+.vscode/
+docker-compose.yml    # (не нужен в контейнере)

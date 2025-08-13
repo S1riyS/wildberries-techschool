@@ -1,0 +1,42 @@
+version: "3"
+
+vars:
+  SERVER_PROD_ENV: server/configs/.env.prod
+
+dotenv: ["{{.SERVER_PROD_ENV}}"]
+
+tasks:
+  default:
+    silent: true
+    cmds:
+      - task --list --color
+
+  compose:up:
+    desc: "Start all containers"
+    cmds:
+      - docker-compose --env-file {{.SERVER_PROD_ENV}} --project-name "wb-techschool-l0" up -d --build
+
+  compose:down:
+    desc: "Stop all containers"
+    cmds:
+      - docker-compose down
+
+  exec:producer:
+    desc: "Run kafka producer job"
+    cmds:
+      - docker exec -it job-producer ./kafka_producer
+
+  exec:database:
+    desc: "Exec into database (postgres) container"
+    cmds:
+      - docker exec -it postgres psql -U ${DB_USER} -d ${DB_NAME}
+
+  logs:backend:
+    desc: "Show backend logs"
+    cmds:
+      - docker logs -f backend
+
+  logs:frontend:
+    desc: "Show frontend logs"
+    cmds:
+      - docker logs -f frontend
