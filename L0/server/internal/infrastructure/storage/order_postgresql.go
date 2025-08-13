@@ -181,6 +181,8 @@ func (r *OrderRepository) Get(ctx context.Context, orderID string) (*domain.Orde
 		return nil, fmt.Errorf("build query: %w", err)
 	}
 
+	logger.Debug("Executing query", slog.String("query", query), slog.Any("args", args))
+
 	var order domain.Order
 	var deliveryID int
 	var paymentTransaction string
@@ -271,6 +273,8 @@ func (r *OrderRepository) GetRecentlyCreated(ctx context.Context, limit int) ([]
 		logger.Error("Failed to build query", slogext.Err(err))
 		return nil, fmt.Errorf("build query: %w", err)
 	}
+
+	logger.Debug("Executing query", slog.String("query", query), slog.Any("args", args))
 
 	rows, err := r.dbClient.Query(ctx, query, args...)
 	if err != nil {

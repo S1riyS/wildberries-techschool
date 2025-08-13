@@ -60,6 +60,8 @@ func (r *PaymentRepository) Save(ctx context.Context, payment *domain.Payment) e
 		return fmt.Errorf("build query: %w", err)
 	}
 
+	logger.Debug("Executing query", slog.String("query", query), slog.Any("args", args))
+
 	_, err = r.dbClient.Exec(ctx, query, args...)
 	if err != nil {
 		logger.Error("Failed to execute query", slogext.Err(err))
@@ -93,6 +95,8 @@ func (r *PaymentRepository) Get(ctx context.Context, transaction string) (*domai
 		return nil, fmt.Errorf("build query: %w", err)
 	}
 
+	logger.Debug("Executing query", slog.String("query", query), slog.Any("args", args))
+
 	var payment domain.Payment
 	err = r.dbClient.QueryRow(ctx, query, args...).Scan(
 		&payment.Transaction,
@@ -108,6 +112,7 @@ func (r *PaymentRepository) Get(ctx context.Context, transaction string) (*domai
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
+			logger.Debug("Payment not found", slog.String("transaction", transaction))
 			return nil, nil
 		}
 		logger.Error("Failed to execute query", slogext.Err(err))

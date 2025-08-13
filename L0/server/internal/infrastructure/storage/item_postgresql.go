@@ -62,6 +62,8 @@ func (r *ItemRepository) Save(ctx context.Context, item *domain.Item) error {
 		return fmt.Errorf("build query: %w", err)
 	}
 
+	logger.Debug("Executing query", slog.String("query", query), slog.Any("args", args))
+
 	_, err = r.dbClient.Exec(ctx, query, args...)
 	if err != nil {
 		logger.Error("Failed to execute query", slogext.Err(err))
@@ -96,6 +98,8 @@ func (r *ItemRepository) Get(ctx context.Context, chrtID int) (*domain.Item, err
 		return nil, fmt.Errorf("build query: %w", err)
 	}
 
+	logger.Debug("Executing query", slog.String("query", query), slog.Any("args", args))
+
 	var item domain.Item
 	err = r.dbClient.QueryRow(ctx, query, args...).Scan(
 		&item.ChrtID,
@@ -112,6 +116,7 @@ func (r *ItemRepository) Get(ctx context.Context, chrtID int) (*domain.Item, err
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
+			logger.Debug("Item not found", slog.Int("chrt_id", chrtID))
 			return nil, nil
 		}
 		logger.Error("Failed to execute query", slogext.Err(err))
@@ -146,6 +151,8 @@ func (r *ItemRepository) GetByOrder(ctx context.Context, orderUID string) ([]*do
 		logger.Error("Failed to build query", slogext.Err(err))
 		return nil, fmt.Errorf("build query: %w", err)
 	}
+
+	logger.Debug("Executing query", slog.String("query", query), slog.Any("args", args))
 
 	rows, err := r.dbClient.Query(ctx, query, args...)
 	if err != nil {

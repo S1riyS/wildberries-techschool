@@ -56,7 +56,6 @@ func (r *DeliveryRepository) Save(ctx context.Context, delivery *domain.Delivery
 		return 0, fmt.Errorf("execute query: %w", err)
 	}
 
-	logger.Debug("Successfully saved delivery", slog.Int("delivery_id", id))
 	return id, nil
 }
 
@@ -94,6 +93,5 @@ func (r *DeliveryRepository) Get(ctx context.Context, id int) (*domain.Delivery,
 		return nil, fmt.Errorf("execute query: %w", err)
 	}
 
-	logger.Debug("Successfully fetched delivery", slog.Int("delivery_id", id))
 	return &delivery, nil
 }
