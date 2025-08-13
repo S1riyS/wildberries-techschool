@@ -34,7 +34,7 @@ func main() {
 	}
 
 	// Call Human's method
-	person.SayHello() // Метод Human доступен через Action
+	person.SayHello()
 
 	// Call Action's method
 	person.Work()
