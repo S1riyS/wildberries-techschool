@@ -6,7 +6,7 @@ import "fmt"
 //
 // Time complexity: O(n + m)
 func intersect(a, b []int) []int {
-	counter := make(map[int]int, len(a))
+	counter := make(map[int]int)
 	for _, v := range a {
 		counter[v]++
 	}
