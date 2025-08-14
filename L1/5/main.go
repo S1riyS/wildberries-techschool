@@ -6,7 +6,8 @@ import (
 )
 
 func main() {
-	timeToWork := 5 * time.Second
+	N := 5
+	timeToWork := time.Duration(N) * time.Second
 	dataCh := make(chan int)
 
 	// Send data to the channel
@@ -15,7 +16,7 @@ func main() {
 		for {
 			i++
 			dataCh <- i
-			time.Sleep(300 * time.Millisecond) // небольшая задержка между отправками
+			time.Sleep(300 * time.Millisecond)
 		}
 	}()
 
@@ -26,7 +27,7 @@ func main() {
 		}
 	}()
 
-	// Ждем N секунд, затем завершаем программу
+	// Handle shutdown
 	<-time.After(timeToWork)
 	close(dataCh)
 	fmt.Println("Done")
