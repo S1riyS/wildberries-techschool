@@ -3,14 +3,14 @@ package cache
 import (
 	"container/list"
 	"context"
-	"fmt"
+	"errors"
 	"log/slog"
 	"sync"
 
 	"github.com/S1riyS/wildberries-techschool/L0/server/internal/domain"
 )
 
-// OrderInMemoryCache is an in-memory LRU cache for orders. Threadsafe due to sync.RWMutex
+// OrderInMemoryCache is an in-memory LRU cache for orders. Threadsafe due to sync.RWMutex.
 type OrderInMemoryCache struct {
 	mu       sync.RWMutex
 	orders   map[string]*list.Element // Maps order UID to list element
@@ -26,13 +26,13 @@ func NewOrderInMemoryCache(capacity int) *OrderInMemoryCache {
 	}
 }
 
-// cacheEntry represents an item in the cache
+// cacheEntry represents an item in the cache.
 type cacheEntry struct {
 	key   string // Order UID
 	order *domain.Order
 }
 
-func (c *OrderInMemoryCache) Save(ctx context.Context, order *domain.Order) error {
+func (c *OrderInMemoryCache) Save(_ context.Context, order *domain.Order) error {
 	const mark = "OrderInMemoryCache.Save"
 	logger := slog.With(slog.String("mark", mark))
 
@@ -42,7 +42,12 @@ func (c *OrderInMemoryCache) Save(ctx context.Context, order *domain.Order) erro
 	// If order already exists, update it and move to front
 	if elem, exists := c.orders[order.OrderUID]; exists {
 		c.list.MoveToFront(elem)
-		elem.Value.(*cacheEntry).order = order
+		cacheEntry, ok := elem.Value.(*cacheEntry)
+		if !ok {
+			logger.Error("Failed to cast cache entry", slog.String("order_uid", order.OrderUID))
+			return errors.New("failed to cast cache entry")
+		}
+		cacheEntry.order = order
 		logger.Debug("Order updated in cache", slog.String("order_uid", order.OrderUID))
 		return nil
 	}
@@ -51,10 +56,15 @@ func (c *OrderInMemoryCache) Save(ctx context.Context, order *domain.Order) erro
 	if len(c.orders) >= c.capacity {
 		oldest := c.list.Back()
 		if oldest != nil {
-			delete(c.orders, oldest.Value.(*cacheEntry).key)
+			oldestEntry, ok := oldest.Value.(*cacheEntry)
+			if !ok {
+				logger.Error("Failed to cast cache entry")
+				return errors.New("failed to cast cache entry")
+			}
+
+			delete(c.orders, oldestEntry.key)
 			c.list.Remove(oldest)
-			logger.Debug("Evicted LRU order from cache",
-				slog.String("order_uid", oldest.Value.(*cacheEntry).key))
+			logger.Debug("Evicted LRU order from cache", slog.String("order_uid", oldestEntry.key))
 		}
 	}
 
@@ -70,7 +80,7 @@ func (c *OrderInMemoryCache) Save(ctx context.Context, order *domain.Order) erro
 	return nil
 }
 
-func (c *OrderInMemoryCache) Get(ctx context.Context, orderID string) (*domain.Order, error) {
+func (c *OrderInMemoryCache) Get(_ context.Context, orderID string) (*domain.Order, error) {
 	const mark = "OrderInMemoryCache.Get"
 	logger := slog.With(slog.String("mark", mark))
 
@@ -80,12 +90,17 @@ func (c *OrderInMemoryCache) Get(ctx context.Context, orderID string) (*domain.O
 	elem, exists := c.orders[orderID]
 	if !exists {
 		logger.Debug("Order not found in cache", slog.String("order_uid", orderID))
-		return nil, fmt.Errorf("order not found")
+		return nil, errors.New("order not found")
 	}
 
 	// Move the accessed order to front (most recently used)
 	c.list.MoveToFront(elem)
-	order := elem.Value.(*cacheEntry).order
+	entry, ok := elem.Value.(*cacheEntry)
+	if !ok {
+		logger.Error("Failed to cast cache entry", slog.String("order_uid", orderID))
+		return nil, errors.New("failed to cast cache entry")
+	}
+	order := entry.order
 
 	logger.Debug("Order found in cache", slog.String("order_uid", order.OrderUID))
 	return order, nil

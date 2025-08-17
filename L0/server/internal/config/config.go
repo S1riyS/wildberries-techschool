@@ -1,6 +1,9 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+	"net"
+)
 
 type Config struct {
 	Env      EnvType `env:"ENV_TYPE"`
@@ -16,7 +19,7 @@ type HTTPConfig struct {
 
 type DatabaseConfig struct {
 	Host     string `env:"DB_HOST"`
-	Port     int    `env:"DB_PORT"`
+	Port     string `env:"DB_PORT"`
 	User     string `env:"DB_USER"`
 	Password string `env:"DB_PASSWORD"`
 	Dbname   string `env:"DB_NAME"`
@@ -28,12 +31,12 @@ type KafkaConfig struct {
 }
 
 func (c *DatabaseConfig) DSN() string {
+	socket := net.JoinHostPort(c.Host, c.Port)
 	return fmt.Sprintf(
-		"postgres://%s:%s@%s:%d/%s",
+		"postgres://%s:%s@%s/%s",
 		c.User,
 		c.Password,
-		c.Host,
-		c.Port,
+		socket,
 		c.Dbname,
 	)
 }

@@ -30,7 +30,7 @@ func main() {
 	if *isDevMode {
 		err := godotenv.Load(localEnvPath)
 		if err != nil {
-			panic(fmt.Errorf("error loading .env file: %v", err))
+			panic(fmt.Errorf("error loading .env file: %w", err))
 		}
 	}
 

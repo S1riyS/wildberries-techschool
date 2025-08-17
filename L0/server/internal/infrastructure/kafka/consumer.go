@@ -10,6 +10,10 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
+const (
+	kafkaSessionTimeout = 7 * time.Second
+)
+
 type IKafkaHandler interface {
 	HandleMessage(ctx context.Context, kafkaMsg []byte, offset int64, consumerNumber int) error
 }
@@ -35,7 +39,7 @@ func NewConsumer(handler IKafkaHandler, addresses []string, topic string, consum
 		Brokers:        addresses,
 		GroupID:        consumerGroup,
 		Topic:          topic,
-		SessionTimeout: 7 * time.Second,
+		SessionTimeout: kafkaSessionTimeout,
 		StartOffset:    kafka.FirstOffset,
 		CommitInterval: 0, // Disable auto-commit
 	})
@@ -64,12 +68,14 @@ func (c *Consumer) Start(ctx context.Context) {
 		}
 
 		// Handle message
-		if err := c.handler.HandleMessage(ctx, msg.Value, msg.Offset, c.consumerNumber); err != nil {
+		err = c.handler.HandleMessage(ctx, msg.Value, msg.Offset, c.consumerNumber)
+		if err != nil {
 			logger.Warn("Failed to handle message", slogext.Err(err))
 		}
 
 		// Commit message manually
-		if err := c.reader.CommitMessages(ctx, msg); err != nil {
+		err = c.reader.CommitMessages(ctx, msg)
+		if err != nil {
 			// Обработка ошибки коммита
 			logger.Warn("Failed to commit message", slogext.Err(err))
 		}

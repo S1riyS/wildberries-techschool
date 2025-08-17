@@ -9,7 +9,7 @@ const (
 	EnvProd  EnvType = "prod"
 )
 
-// UnmarshalText implements text unmarshalling for EnvType
+// UnmarshalText implements text unmarshalling for EnvType.
 func (l *EnvType) UnmarshalText(text []byte) error {
 	switch string(text) {
 	case "local":

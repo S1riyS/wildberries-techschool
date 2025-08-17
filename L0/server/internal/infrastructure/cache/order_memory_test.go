@@ -1,18 +1,18 @@
-package cache
+package cache_test
 
 import (
-	"context"
 	"sync"
 	"testing"
 
 	"github.com/S1riyS/wildberries-techschool/L0/server/internal/domain"
+	"github.com/S1riyS/wildberries-techschool/L0/server/internal/infrastructure/cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestOrderInMemoryCache(t *testing.T) {
-	ctx := context.Background()
-	cache := NewOrderInMemoryCache(2)
+	ctx := t.Context()
+	cache := cache.NewOrderInMemoryCache(2)
 
 	order1 := &domain.Order{OrderUID: "order1"}
 	order2 := &domain.Order{OrderUID: "order2"}
@@ -59,13 +59,13 @@ func TestOrderInMemoryCache(t *testing.T) {
 
 		// order2 should be evicted
 		_, err = cache.Get(ctx, order2.OrderUID)
-		assert.Error(t, err, "order2 should be evicted")
+		require.Error(t, err, "order2 should be evicted")
 
 		// order1 and order3 should still be in cache
 		_, err = cache.Get(ctx, order1.OrderUID)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		_, err = cache.Get(ctx, order3.OrderUID)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("concurrent access", func(t *testing.T) {

@@ -51,7 +51,11 @@ func (r *OrderRepository) Save(ctx context.Context, order *domain.Order) error {
 		return fmt.Errorf("begin transaction: %w", err)
 	}
 	// Ensure the transaction will be rolled back if not committed
-	defer tx.Rollback(ctx)
+	defer func() {
+		if rerr := tx.Rollback(ctx); rerr != nil && !errors.Is(rerr, context.Canceled) {
+			slog.Error("Failed to rollback transaction", "error", rerr)
+		}
+	}()
 
 	// Set current time for order
 	order.DateCreated = time.Now()
@@ -249,6 +253,10 @@ func (r *OrderRepository) Get(ctx context.Context, orderID string) (*domain.Orde
 func (r *OrderRepository) GetRecentlyCreated(ctx context.Context, limit int) ([]*domain.Order, error) {
 	const mark = "storage.OrderRepository.GetRecentlyCreated"
 	logger := slog.With(slog.String("mark", mark))
+
+	if limit <= 0 {
+		return nil, errors.New("limit must be greater than 0")
+	}
 
 	query, args, err := r.sb.Select(
 		"order_uid",

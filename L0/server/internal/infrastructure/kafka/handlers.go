@@ -21,6 +21,9 @@ func NewOrderHandler(service *service.OrderService) *OrderHandler {
 }
 
 func (h *OrderHandler) HandleMessage(ctx context.Context, kafkaMsg []byte, offset int64, consumerNumber int) error {
+	_ = offset         // TODO: decide if offset is needed
+	_ = consumerNumber // TODO: decide if consumerNumber is needed
+
 	const mark = "kafka.OrderHandler.HandleMessage"
 	logger := slog.With(slog.String("mark", mark))
 
