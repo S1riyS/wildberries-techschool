@@ -1,0 +1,48 @@
+name: L0 Server CI
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "L0/server/**"
+  pull_request:
+    branches: [master]
+    paths:
+      - "L0/server/**"
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./L0/server
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.24"
+        env:
+          GOPATH: ${{ github.workspace }}/go
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/go/pkg/mod
+            ${{ github.workspace }}/go/bin
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Check Go modules
+        run: go mod tidy
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Run tests
+        run: go test -v -coverprofile=coverage.out ./...
