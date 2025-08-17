@@ -9,6 +9,11 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
+const (
+	kafkaBatchTimeout = 50 * time.Millisecond
+	kafkaMaxAttempts  = 10
+)
+
 type Producer struct {
 	writer *kafka.Writer
 }
@@ -17,11 +22,11 @@ func NewProducer(addresses []string) (*Producer, error) {
 	writer := &kafka.Writer{
 		Addr:         kafka.TCP(addresses...),
 		Balancer:     &kafka.LeastBytes{},
-		BatchTimeout: 50 * time.Millisecond,
+		BatchTimeout: kafkaBatchTimeout,
 		// At-least-once delivery
 		RequiredAcks: kafka.RequireAll,
 		Async:        false,
-		MaxAttempts:  10,
+		MaxAttempts:  kafkaMaxAttempts,
 	}
 
 	return &Producer{writer: writer}, nil

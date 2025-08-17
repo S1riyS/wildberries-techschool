@@ -28,8 +28,9 @@ func (a *App) MustRun(ctx context.Context) {
 
 	logger := slog.With(slog.String("mark", mark))
 
+	const numTasks = 3
 	wg := &sync.WaitGroup{}
-	wg.Add(3)
+	wg.Add(numTasks)
 
 	// Recover cache
 	go func() {
@@ -60,6 +61,12 @@ func (a *App) MustRun(ctx context.Context) {
 
 func (a *App) Stop() {
 	ctx := context.Background()
+	// Stop HTTP server
 	a.resolver.HTTPServer(ctx).Stop()
-	a.resolver.OrderConsumer(ctx).Stop()
+
+	// Stop kafka consumer
+	err := a.resolver.OrderConsumer(ctx).Stop()
+	if err != nil {
+		slog.Error("failed to stop kafka consumer", slogext.Err(err))
+	}
 }

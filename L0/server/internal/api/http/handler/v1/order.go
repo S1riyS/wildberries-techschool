@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"net/http"
+
 	"github.com/S1riyS/wildberries-techschool/L0/server/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -20,9 +22,9 @@ func (h *OrderHandler) GetOne(ctx *gin.Context) {
 
 	order, err := h.service.GetOne(ctx.Request.Context(), id)
 	if err != nil {
-		ctx.Error(err)
+		ctx.Error(err) //nolint:errcheck // golangcli issue
 		return
 	}
 
-	ctx.JSON(200, order)
+	ctx.JSON(http.StatusOK, order)
 }

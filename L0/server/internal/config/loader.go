@@ -12,7 +12,7 @@ var (
 )
 
 // MustNew returns the application configuration.
-// Note that config.Config is a singleton
+// Note that config.Config is a singleton.
 func MustNew() Config {
 	once.Do(func() {
 		instance = &Config{}

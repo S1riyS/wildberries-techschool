@@ -56,7 +56,9 @@ func main() {
 
 	// Generate order
 	var randomOrder domain.Order
-	err = faker.FakeData(&randomOrder, options.WithRandomMapAndSliceMinSize(1), options.WithRandomMapAndSliceMaxSize(3))
+	const minSize = 1
+	const maxSize = 3
+	err = faker.FakeData(&randomOrder, options.WithRandomMapAndSliceMinSize(minSize), options.WithRandomMapAndSliceMaxSize(maxSize))
 	if err != nil {
 		logger.Error("Error generating random order", slogext.Err(err))
 		return
@@ -73,7 +75,6 @@ func main() {
 	}
 
 	logger.Info("Produced order", slog.String("orderUID", randomOrder.OrderUID))
-
 }
 
 func setupPrettySlog() *slog.Logger {
