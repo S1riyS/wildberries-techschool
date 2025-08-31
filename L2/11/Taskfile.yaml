@@ -1,0 +1,60 @@
+version: "3"
+
+vars:
+  # Dirs
+  LOCAL_BIN: "{{.TASKFILE_DIR}}/bin"
+  # Go files
+  MAIN_FILE: ./cmd/main.go
+  BUILD_FILE: ./build/main
+
+tasks:
+  default:
+    silent: true
+    cmds:
+      - task --list --color
+
+  run:
+    desc: "Run the application"
+    cmds:
+      - go run {{.MAIN_FILE}}
+
+  build:
+    desc: "Build the application"
+    cmds:
+      - go build -o {{.BUILD_FILE}} {{.MAIN_FILE}}
+
+  format:
+    desc: "Format the code"
+    cmds:
+      - go fmt ./...
+
+  lint:
+    desc: "Lint the code"
+    cmds:
+      - "{{.LOCAL_BIN}}/golangci-lint run ./... --config .golangci.yml"
+
+  vet:
+    desc: "Run go vet"
+    cmds:
+      - go vet ./...
+
+  tidy:
+    desc: "Run go mod tidy"
+    cmds:
+      - go mod tidy
+
+  install-deps:
+    desc: "Install binary dependencies"
+    cmds:
+      - mkdir -p {{.LOCAL_BIN}}
+      - GOBIN={{.LOCAL_BIN}} go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.1.6
+
+  test:
+    desc: "Run the tests"
+    cmds:
+      - go test ./... -v
+
+  clean:
+    desc: "Clean the binary"
+    cmds:
+      - rm -f main
