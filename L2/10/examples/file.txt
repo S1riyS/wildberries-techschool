@@ -1,0 +1,12 @@
+azebra	5	black	Jan	1.2kB
+apple	3	red	Feb	450B
+banana	1	yellow	Mar	2.1MB
+apple	3	red	Apr	750kB
+cherry	2	red	May	3.8GB
+banana	1	yellow	Jun	125MB
+date	4	brown	Jul	5.5kB
+orange	6	orange	Aug	900MB
+grape	7	purple	Sep	1.8TB
+mango	8	orange	Oct	250kB
+kiwi	9	green	Nov	4.2MB
+lemon	10	yellow	Dec	15GB

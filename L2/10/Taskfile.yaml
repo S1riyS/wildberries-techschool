@@ -52,9 +52,9 @@ tasks:
   test:
     desc: "Run the tests"
     cmds:
-      - go test ./... -v
+      - go test ./... -v -race
 
   clean:
     desc: "Clean the binary"
     cmds:
-      - rm -f main
+      - rm -f {{.BUILD_FILE}}

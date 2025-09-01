@@ -133,18 +133,18 @@ func (p *Parser) parseHumanSize(s string) int64 {
 	s = strings.TrimSpace(s)
 
 	// Try to parse as plain number first
-	if num, err := strconv.ParseInt(s, 10, 64); err == nil {
-		return num
+	if num, err := strconv.ParseFloat(s, 64); err == nil {
+		return int64(num)
 	}
 
 	// Try to parse with suffix
-	re := regexp.MustCompile(`^(\d+)([kKmMgGtT])?[bB]?$`)
+	re := regexp.MustCompile(`^(\d+\.?\d*)([kKmMgGtT])?[bB]?$`)
 	matches := re.FindStringSubmatch(s)
 	if matches == nil {
 		return -1
 	}
 
-	num, err := strconv.ParseInt(matches[1], 10, 64)
+	num, err := strconv.ParseFloat(matches[1], 64)
 	if err != nil {
 		return -1
 	}
@@ -152,9 +152,9 @@ func (p *Parser) parseHumanSize(s string) int64 {
 	if len(matches) > 2 && matches[2] != "" {
 		multiplier, exists := SizeSuffixes[matches[2]]
 		if exists {
-			num *= multiplier
+			num *= float64(multiplier)
 		}
 	}
 
-	return num
+	return int64(num)
 }

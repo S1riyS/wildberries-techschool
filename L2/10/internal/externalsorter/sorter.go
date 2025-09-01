@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
+	"log" //nolint:depguard // I am too lazy to use log/slog here. Sorry
 	"os"
 	"path/filepath"
 	"sort"
@@ -153,24 +153,7 @@ func (s *Sorter) mergeSortedChunks(output io.Writer) error {
 		return nil
 	}
 
-	// Single chunk, just copy to output
-	if len(s.chunkFiles) == 1 {
-		return s.copySingleChunk(output)
-	}
-
-	// Multi-way merge
 	return s.multiWayMerge(output)
-}
-
-func (s *Sorter) copySingleChunk(output io.Writer) error {
-	file, err := os.Open(s.chunkFiles[0])
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	_, err = io.Copy(output, file)
-	return err
 }
 
 func (s *Sorter) multiWayMerge(output io.Writer) error {
@@ -180,7 +163,7 @@ func (s *Sorter) multiWayMerge(output io.Writer) error {
 	}
 	defer s.closeFiles(files)
 
-	currentLines := s.initializeScanners(readers)
+	currentLines := s.initializeLines(readers)
 
 	writer := bufio.NewWriter(output)
 	defer writer.Flush()
@@ -226,7 +209,8 @@ func (s *Sorter) closeFiles(files []*os.File) {
 	}
 }
 
-func (s *Sorter) initializeScanners(readers []*bufio.Scanner) []*Line {
+// initializeLines reads the first line from each chunk file.
+func (s *Sorter) initializeLines(readers []*bufio.Scanner) []*Line {
 	currentLines := make([]*Line, len(readers))
 	for i, scanner := range readers {
 		if scanner.Scan() {
@@ -238,6 +222,7 @@ func (s *Sorter) initializeScanners(readers []*bufio.Scanner) []*Line {
 	return currentLines
 }
 
+// findNextLine returns the index of the line with the smallest key and the line itself.
 func (s *Sorter) findNextLine(currentLines []*Line) (int, *Line) {
 	minIndex := -1
 	var minLine *Line
@@ -267,17 +252,24 @@ func (s *Sorter) findNextLine(currentLines []*Line) (int, *Line) {
 	return minIndex, minLine
 }
 
+// processLine processes a line and writes it to the output.
 func (s *Sorter) processLine(minLine *Line, lastLine *string, writer *bufio.Writer) error {
-	// Check for uniqueness
-	if !s.config.IsUnique || minLine.Original != *lastLine {
-		if _, err := writer.WriteString(minLine.Original + "\n"); err != nil {
-			return err
-		}
-		*lastLine = minLine.Original
+	// Handle same lines
+	if minLine.Original == *lastLine && s.config.IsUnique {
+		return nil
 	}
+
+	// Write line
+	_, err := writer.WriteString(minLine.Original + "\n")
+	if err != nil {
+		return err
+	}
+	*lastLine = minLine.Original
+
 	return nil
 }
 
+// advanceScanner advances the scanner for the given index.
 func (s *Sorter) advanceScanner(scanner *bufio.Scanner, currentLines []*Line, index int) {
 	if scanner.Scan() {
 		line := scanner.Text()
@@ -295,4 +287,65 @@ func (s *Sorter) Cleanup() {
 			log.Println(err)
 		}
 	}
+}
+
+// CheckIfSorted checks if the input is sorted.
+// Returns true if sorted, false otherwise, along with the line number and contents of the unsorted line.
+func (s *Sorter) CheckIfSorted(input io.Reader, output io.Writer) (bool, error) {
+	scanner := bufio.NewScanner(input)
+
+	lineNumber := 0
+	var lastLine *Line
+	for scanner.Scan() {
+		lineNumber++
+
+		line := scanner.Text()
+		parsed := s.parser.ParseLine(line)
+		currentLine := &Line{Original: line, Key: parsed}
+
+		if lastLine == nil {
+			lastLine = currentLine
+			continue
+		}
+
+		comparisonResult := s.parser.Compare(currentLine.Key, lastLine.Key)
+		if s.config.IsReverse {
+			comparisonResult = -comparisonResult
+		}
+
+		// Check if sorted
+		isSorted := true
+		isSorted = isSorted && (comparisonResult != 0 || !s.config.IsUnique) // Uniqueness
+		isSorted = isSorted && (comparisonResult > 0)                        // Ascending order
+
+		if !isSorted {
+			err := s.writeDisorderMessage(output, lineNumber, line)
+			if err != nil {
+				return false, err
+			}
+			return false, nil
+		}
+
+		lastLine = currentLine
+	}
+
+	return true, nil
+}
+
+func (s *Sorter) writeDisorderMessage(output io.Writer, lineNumber int, line string) error {
+	// Determine filename
+	var filenameToDisplay string
+	if s.config.InputFile == "" {
+		filenameToDisplay = "stdin"
+	} else {
+		filenameToDisplay = s.config.InputFile
+	}
+
+	// Write message
+	message := fmt.Sprintf("%s:%d: disorder: %s\n", filenameToDisplay, lineNumber, line)
+	_, err := output.Write([]byte(message))
+	if err != nil {
+		return err
+	}
+	return nil
 }
