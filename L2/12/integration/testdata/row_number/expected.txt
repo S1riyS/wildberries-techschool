@@ -1,0 +1,8 @@
+1-Hello world
+2:This is a test file
+3-Search for patterns
+--
+5-Line with numbers 123
+6:Another test line
+7-Pattern matching
+--

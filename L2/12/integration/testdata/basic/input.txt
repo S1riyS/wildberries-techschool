@@ -1,0 +1,5 @@
+line 1
+line with error
+line 3
+another error line
+line 5

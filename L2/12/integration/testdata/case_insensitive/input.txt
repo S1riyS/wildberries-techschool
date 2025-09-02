@@ -1,0 +1,4 @@
+line 1
+line with error
+LINE WITH ERROR
+line 4

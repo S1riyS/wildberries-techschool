@@ -1,0 +1,8 @@
+Hello world
+This is a test file
+Search for patterns
+grep is powerful
+Line with numbers 123
+Another test line
+Pattern matching
+End of file

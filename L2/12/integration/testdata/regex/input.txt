@@ -1,0 +1,4 @@
+test line
+tast pattern
+tost value
+no match
