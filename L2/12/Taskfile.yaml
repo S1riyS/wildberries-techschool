@@ -4,7 +4,7 @@ vars:
   # Dirs
   LOCAL_BIN: "{{.TASKFILE_DIR}}/bin"
   # Go files
-  MAIN_FILE: ./cmd/sort/main.go
+  MAIN_FILE: ./cmd/grep/main.go
   BUILD_FILE: ./build/grep
 
 tasks:
