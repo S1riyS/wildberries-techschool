@@ -1,0 +1,12 @@
+apple|banana|cherry|date|elderberry|fruit
+Zebra|Apple|banana|123|test|mixed
+orange|kiwi|mango|456|sample|citrus
+grape|lemon|pineapple|789|demo|berry
+Pear|FIG|plum|101|example|stone
+123|456|789|000|numbers|digits
+special|chars|here|!@#|symbols|punctuation
+line_without_delimiter_should_be_ignored_with_d_flag
+another_line_with_no_pipes
+A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P
+one:two:three:four:five:six
+tab	separated	columns	here
