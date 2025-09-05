@@ -1,0 +1,3 @@
+field1	field2	field3	field4
+apple	banana	cherry	date
+one	two	three	four

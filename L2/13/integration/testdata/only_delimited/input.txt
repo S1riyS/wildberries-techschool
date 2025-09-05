@@ -1,0 +1,4 @@
+user:john:admin
+plain text without delimiter
+root:superuser:system
+another plain line

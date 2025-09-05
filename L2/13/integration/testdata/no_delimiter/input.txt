@@ -1,0 +1,4 @@
+this line has no colon
+user:password:role
+another line without delimiter
+admin:secret:superuser
